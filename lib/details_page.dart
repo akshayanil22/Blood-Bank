@@ -11,7 +11,7 @@ class DetailsPage extends StatefulWidget {
 
 class _DetailsPageState extends State<DetailsPage> {
   String dropdownValue = 'A+';
-  String bloodGroup = 'A+';
+  String bloodGroup = '';
   bool filterButtonPressed=false;
   @override
   Widget build(BuildContext context) {
@@ -81,7 +81,13 @@ class _DetailsPageState extends State<DetailsPage> {
                   }
                   if(snapshot.data!.docs.isEmpty){
                     return Center(
-                      child: Image.asset('images/empty.png'),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset('images/empty.png'),
+                          Text('No $bloodGroup Data'),
+                        ],
+                      ),
                     );
                   }
                   return ListView(
@@ -91,18 +97,15 @@ class _DetailsPageState extends State<DetailsPage> {
                           showDialog(
                             context: context,
                             builder: (ctx) => AlertDialog(
-                              title: Text("Are You Sure"),
+                              title: const Text("Are You Sure"),
                               content: Text("Do You want To Delete ${document['Name']}"),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () {
-                                    FirebaseFirestore.instance.collection('data').doc(document.id).delete().then((_){
-                                      Navigator.of(ctx).pop();
-                                    });
-                                    print(document.id);
-
+                                    FirebaseFirestore.instance.collection('data').doc(document.id).delete();
+                                    Navigator.of(ctx).pop();
                                   },
-                                  child: Text("Yes"),
+                                  child: const Text("Yes"),
                                 ),
                               ],
                             ),
@@ -134,7 +137,6 @@ class _DetailsPageState extends State<DetailsPage> {
                                 color: Colors.green,
                               ),
                               onPressed: () {
-                                print('Call${document['Phone']}');
                                 launch("tel://${document['Phone']}");
                               },
                             ),

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 class AddBlood extends StatefulWidget {
   const AddBlood({Key? key}) : super(key: key);
@@ -9,10 +10,9 @@ class AddBlood extends StatefulWidget {
 }
 
 class _AddBloodState extends State<AddBlood> {
-
   String dropdownValue = 'A+';
-  String something = 'Add New Data';
-  bool dataAdd = false;
+  String statusMessage = '';
+  bool dataAdding = false;
   bool isLoading = false;
 
   TextEditingController nameController = TextEditingController();
@@ -27,12 +27,17 @@ class _AddBloodState extends State<AddBlood> {
           Center(
             child: SingleChildScrollView(
               child: Container(
-                // height: 450,
                 padding: const EdgeInsets.all(10),
                 child: Column(
                   children: [
-                    Text(something,style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 22 ),),
-                    const SizedBox(height: 10,),
+                    Text(
+                      statusMessage,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 22),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
                     TextField(
                       controller: nameController,
                       decoration: const InputDecoration(
@@ -95,7 +100,7 @@ class _AddBloodState extends State<AddBlood> {
                         }).toList(),
                       ),
                     ),
-                    Container(
+                    SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
@@ -106,42 +111,50 @@ class _AddBloodState extends State<AddBlood> {
                               phoneController.text == '' ||
                               placeController.text == '')) {
                             if (phoneController.text.length == 10) {
-                              FirebaseFirestore.instance.collection('data').add({
+                              FirebaseFirestore.instance
+                                  .collection('data')
+                                  .add({
                                 'Name': nameController.text,
                                 'Phone': phoneController.text,
                                 'Blood': dropdownValue,
                                 'Place': placeController.text
-                              }).then((value){
+                              }).then((value) {
                                 nameController.clear();
                                 phoneController.clear();
                                 placeController.clear();
 
-                                FocusScope.of(context).requestFocus(FocusNode());
+                                FocusScope.of(context)
+                                    .requestFocus(FocusNode());
 
                                 setState(() {
-                                  something = 'Success';
-                                  dataAdd = true;
-                                  isLoading= false;
+                                  statusMessage = 'Success';
+                                  dataAdding = true;
+                                  isLoading = false;
                                 });
 
-                                Future.delayed(const Duration(seconds: 1),(){
+                                Future.delayed(const Duration(seconds: 1), () {
                                   setState(() {
-                                    something = 'Add New Data';
-                                    dataAdd = false;
+                                    statusMessage = '';
+                                    dataAdding = false;
                                   });
                                 });
-
                               });
                             } else {
-                              print('Phone number must be 10');
                               setState(() {
                                 isLoading = false;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Phone number must be 10 digit')));
                               });
                             }
                           } else {
-                            print('All Field required');
                             setState(() {
                               isLoading = false;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content:
+                                          Text('All Fields are required')));
                             });
                           }
                         },
@@ -153,21 +166,14 @@ class _AddBloodState extends State<AddBlood> {
               ),
             ),
           ),
-          isLoading?Center(child: CircularProgressIndicator()):SizedBox(),
-          dataAdd ? Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Center(
-              child: Container(
-                height: 100,
-                width: 100,
-                child: Icon(Icons.done),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(50),
-                  color: Colors.green,
-                ),
-              ),
-            ),
-          ) : SizedBox(),
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : const SizedBox(),
+          dataAdding
+              ? Center(
+                  child: Lottie.asset('assets/done.json'),
+                )
+              : const SizedBox(),
         ],
       ),
     );
