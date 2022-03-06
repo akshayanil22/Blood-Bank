@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -101,9 +103,21 @@ class _DetailsPageState extends State<DetailsPage> {
                               content: Text("Do You want To Delete ${document['Name']}"),
                               actions: <Widget>[
                                 TextButton(
-                                  onPressed: () {
-                                    FirebaseFirestore.instance.collection('data').doc(document.id).delete();
-                                    Navigator.of(ctx).pop();
+                                  onPressed: () async {
+
+                                    try {
+                                      final result = await InternetAddress.lookup('example.com');
+                                      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+                                        FirebaseFirestore.instance.collection('data').doc(document.id).delete();
+                                        Navigator.of(ctx).pop();
+                                      }
+                                    } on SocketException catch (_) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Check Internet Connection')));
+                                    }
+
                                   },
                                   child: const Text("Yes"),
                                 ),

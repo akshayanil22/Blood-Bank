@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -103,7 +105,7 @@ class _AddBloodState extends State<AddBlood> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           setState(() {
                             isLoading = true;
                           });
@@ -111,34 +113,50 @@ class _AddBloodState extends State<AddBlood> {
                               phoneController.text == '' ||
                               placeController.text == '')) {
                             if (phoneController.text.length == 10) {
-                              FirebaseFirestore.instance
-                                  .collection('data')
-                                  .add({
-                                'Name': nameController.text,
-                                'Phone': phoneController.text,
-                                'Blood': dropdownValue,
-                                'Place': placeController.text
-                              }).then((value) {
-                                nameController.clear();
-                                phoneController.clear();
-                                placeController.clear();
 
-                                FocusScope.of(context)
-                                    .requestFocus(FocusNode());
+                              try {
+                                final result = await InternetAddress.lookup('example.com');
+                                if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+                                  print('connected');
+                                  FirebaseFirestore.instance
+                                      .collection('data')
+                                      .add({
+                                    'Name': nameController.text,
+                                    'Phone': phoneController.text,
+                                    'Blood': dropdownValue,
+                                    'Place': placeController.text
+                                  }).then((value) {
+                                    nameController.clear();
+                                    phoneController.clear();
+                                    placeController.clear();
 
-                                setState(() {
-                                  statusMessage = 'Success';
-                                  dataAdding = true;
-                                  isLoading = false;
-                                });
+                                    FocusScope.of(context)
+                                        .requestFocus(FocusNode());
 
-                                Future.delayed(const Duration(seconds: 1), () {
-                                  setState(() {
-                                    statusMessage = '';
-                                    dataAdding = false;
+                                    setState(() {
+                                      statusMessage = 'Success';
+                                      dataAdding = true;
+                                      isLoading = false;
+                                    });
+
+                                    Future.delayed(const Duration(seconds: 1), () {
+                                      setState(() {
+                                        statusMessage = '';
+                                        dataAdding = false;
+                                      });
+                                    });
                                   });
+                                }
+                              } on SocketException catch (_) {
+                                print('not connected');
+                                setState(() {
+                                  isLoading = false;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'Check Internet Connection')));
                                 });
-                              });
+                              }
                             } else {
                               setState(() {
                                 isLoading = false;
