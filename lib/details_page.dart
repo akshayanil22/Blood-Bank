@@ -15,6 +15,7 @@ class _DetailsPageState extends State<DetailsPage> {
   String dropdownValue = 'A+';
   String bloodGroup = '';
   bool filterButtonPressed=false;
+  String searchData='';
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -22,6 +23,19 @@ class _DetailsPageState extends State<DetailsPage> {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
+            TextField(
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                hintText: 'Search Name',
+                icon: Icon(Icons.search),
+              ),
+              onChanged: (value){
+                setState(() {
+                  searchData = value;
+                  filterButtonPressed=false;
+                });
+              },
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -72,7 +86,7 @@ class _DetailsPageState extends State<DetailsPage> {
                     .snapshots():
                 FirebaseFirestore.instance
                     .collection('data')
-                .orderBy('Name')
+                .orderBy('Name').startAt([searchData]).endAt([searchData+'\uf8ff'])
                     .snapshots(),
                 builder:
                     (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -83,12 +97,14 @@ class _DetailsPageState extends State<DetailsPage> {
                   }
                   if(snapshot.data!.docs.isEmpty){
                     return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset('images/empty.png'),
-                          Text('No $bloodGroup Data'),
-                        ],
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset('images/empty.png'),
+                            Text('No $bloodGroup Data'),
+                          ],
+                        ),
                       ),
                     );
                   }
