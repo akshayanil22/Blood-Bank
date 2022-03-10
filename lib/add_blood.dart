@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 
 class AddBlood extends StatefulWidget {
@@ -20,6 +21,8 @@ class _AddBloodState extends State<AddBlood> {
   TextEditingController nameController = TextEditingController();
   TextEditingController placeController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
+
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -40,35 +43,68 @@ class _AddBloodState extends State<AddBlood> {
                     const SizedBox(
                       height: 10,
                     ),
-                    TextField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          label: Text('Name'),
-                          hintText: 'Enter Name'),
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    TextField(
-                      controller: placeController,
-                      decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          label: Text('Place'),
-                          hintText: 'Enter Place'),
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    TextField(
-                      maxLength: 10,
-                      keyboardType: TextInputType.phone,
-                      controller: phoneController,
-                      decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          label: Text('Phone'),
-                          hintText: 'Enter Phone Number'),
-                    ),
+                    Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please Enter Name';
+                                }
+                                return null;
+                              },
+                              textCapitalization: TextCapitalization.words,
+                              controller: nameController,
+                              decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  label: Text('Name'),
+                                  hintText: 'Enter Name'),
+                            ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            TextFormField(
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please Enter Place';
+                                }
+                                return null;
+                              },
+                              textCapitalization: TextCapitalization.words,
+                              keyboardType: TextInputType.name,
+                              controller: placeController,
+                              decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  label: Text('Place'),
+                                  hintText: 'Enter Place'),
+                            ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            TextFormField(
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please Enter Phone Number';
+                                }
+                                else if (!(value.length == 10)) {
+                                  return 'Phone Number Must be 10 Digits';
+                                }
+                                return null;
+                              },
+                              inputFormatters: [
+                                FilteringTextInputFormatter.deny(RegExp(r'[ .+#-(/)N,*;]')),
+                              ],
+                              maxLength: 10,
+                              keyboardType: TextInputType.phone,
+                              controller: phoneController,
+                              decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  label: Text('Phone'),
+                                  hintText: 'Enter Phone Number'),
+                            ),
+                          ],
+                        )),
                     Container(
                       alignment: Alignment.centerRight,
                       child: DropdownButton<String>(
@@ -106,6 +142,7 @@ class _AddBloodState extends State<AddBlood> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () async {
+                          _formKey.currentState!.validate();
                           setState(() {
                             isLoading = true;
                           });
@@ -113,18 +150,18 @@ class _AddBloodState extends State<AddBlood> {
                               phoneController.text == '' ||
                               placeController.text == '')) {
                             if (phoneController.text.length == 10) {
-
                               try {
-                                final result = await InternetAddress.lookup('example.com');
-                                if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-                                  print('connected');
+                                final result =
+                                    await InternetAddress.lookup('example.com');
+                                if (result.isNotEmpty &&
+                                    result[0].rawAddress.isNotEmpty) {
                                   FirebaseFirestore.instance
                                       .collection('data')
                                       .add({
-                                    'Name': nameController.text,
+                                    'Name': nameController.text.trim(),
                                     'Phone': phoneController.text,
                                     'Blood': dropdownValue,
-                                    'Place': placeController.text
+                                    'Place': placeController.text.trim(),
                                   }).then((value) {
                                     nameController.clear();
                                     phoneController.clear();
@@ -139,7 +176,8 @@ class _AddBloodState extends State<AddBlood> {
                                       isLoading = false;
                                     });
 
-                                    Future.delayed(const Duration(seconds: 1), () {
+                                    Future.delayed(const Duration(seconds: 1),
+                                        () {
                                       setState(() {
                                         statusMessage = '';
                                         dataAdding = false;
@@ -148,7 +186,6 @@ class _AddBloodState extends State<AddBlood> {
                                   });
                                 }
                               } on SocketException catch (_) {
-                                print('not connected');
                                 setState(() {
                                   isLoading = false;
                                   ScaffoldMessenger.of(context).showSnackBar(
